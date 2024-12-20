@@ -6,7 +6,6 @@
     <title>Daily Operations Summary</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        /* Previous styles remain the same */
         :root {
             --primary-color: #2c3e50;
             --secondary-color: #34495e;
@@ -22,13 +21,38 @@
             color: var(--primary-color);
         }
 
-        /* Add styles for editable sections */
+        .button-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .export-button, .print-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .export-button:hover, .print-button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .metric-box {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #f8f9fa;
+        }
+
         .editable-list {
             min-height: 100px;
             border: 1px solid var(--border-color);
             border-radius: 4px;
             padding: 10px;
-            margin-top: 10px;
         }
 
         .add-item-form {
@@ -62,35 +86,8 @@
             cursor: pointer;
         }
 
-        .button-container {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .export-button, .print-button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .export-button:hover, .print-button:hover {
-            background-color: var(--secondary-color);
-        }
-
         @media print {
             .no-print {
-                display: none;
-            }
-            
-            .editable-list {
-                border: none;
-            }
-            
-            .delete-item {
                 display: none;
             }
         }
@@ -101,8 +98,6 @@
         <button onclick="window.print()" class="print-button">Print Report</button>
         <button onclick="exportToPDF()" class="export-button">Export to PDF</button>
     </div>
-
-    <!-- Previous header and metrics sections remain the same -->
 
     <div class="metric-box">
         <h3>Critical Issues</h3>
@@ -123,8 +118,6 @@
     </div>
 
     <script>
-        // Previous updateReport function and sample data remain the same
-
         // Function to add new items to lists
         function addItem(listId, inputId) {
             const input = document.getElementById(inputId);
@@ -150,7 +143,6 @@
 
         // Function to export to PDF
         function exportToPDF() {
-            // Remove no-print elements temporarily
             const noPrintElements = document.querySelectorAll('.no-print');
             noPrintElements.forEach(el => el.style.display = 'none');
 
@@ -164,27 +156,9 @@
             };
 
             html2pdf().set(opt).from(element).save().then(() => {
-                // Restore no-print elements
                 noPrintElements.forEach(el => el.style.display = 'block');
             });
         }
-
-        // Initialize empty lists
-        document.getElementById('criticalIssues').innerHTML = '';
-        document.getElementById('actionItems').innerHTML = '';
-
-        // Add event listeners for enter key
-        document.getElementById('newCriticalIssue').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                addItem('criticalIssues', 'newCriticalIssue');
-            }
-        });
-
-        document.getElementById('newActionItem').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                addItem('actionItems', 'newActionItem');
-            }
-        });
     </script>
 </body>
 </html>
