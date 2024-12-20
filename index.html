@@ -1,5 +1,3 @@
-Complete Warehouse Operations Dashboard
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -62,6 +60,11 @@ Complete Warehouse Operations Dashboard
 
         .issues-list li {
             margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .edit-mode .issues-list li:hover {
+            background-color: #f0f0f0;
         }
 
         .trend-up {
@@ -103,18 +106,6 @@ Complete Warehouse Operations Dashboard
             background-color: #e0e0e0;
         }
 
-        .edit-mode .issues-list li {
-            cursor: pointer;
-            background-color: #f0f0f0;
-            padding: 5px;
-            margin: 5px 0;
-            border-radius: 3px;
-        }
-
-        .edit-mode .issues-list li:hover {
-            background-color: #e0e0e0;
-        }
-
         .list-controls {
             margin-top: 10px;
             display: none;
@@ -136,17 +127,6 @@ Complete Warehouse Operations Dashboard
 
         .list-add-button:hover {
             background-color: var(--secondary-color);
-        }
-
-        .delete-item {
-            color: red;
-            margin-left: 10px;
-            cursor: pointer;
-            display: none;
-        }
-
-        .edit-mode .delete-item {
-            display: inline;
         }
 
         .modal {
@@ -178,7 +158,7 @@ Complete Warehouse Operations Dashboard
         }
 
         @media print {
-            .controls, .modal, .list-controls, .delete-item {
+            .controls, .modal, .list-controls {
                 display: none !important;
             }
         }
@@ -225,6 +205,7 @@ Complete Warehouse Operations Dashboard
     </div>
 
     <div class="metrics-grid">
+        <!-- Shipping Performance Box -->
         <div class="metric-box">
             <h3>Shipping Performance</h3>
             <div class="metric-item">
@@ -245,6 +226,7 @@ Complete Warehouse Operations Dashboard
             </div>
         </div>
 
+        <!-- Receiving Performance Box -->
         <div class="metric-box">
             <h3>Receiving Performance</h3>
             <div class="metric-item">
@@ -265,6 +247,7 @@ Complete Warehouse Operations Dashboard
             </div>
         </div>
 
+        <!-- Labor Efficiency Box -->
         <div class="metric-box">
             <h3>Labor Efficiency</h3>
             <div class="metric-item">
@@ -281,6 +264,7 @@ Complete Warehouse Operations Dashboard
             </div>
         </div>
 
+        <!-- Quality Metrics Box -->
         <div class="metric-box">
             <h3>Quality Metrics</h3>
             <div class="metric-item">
@@ -298,26 +282,29 @@ Complete Warehouse Operations Dashboard
         </div>
     </div>
 
+    <!-- Critical Issues Box -->
     <div class="metric-box">
         <h3>Critical Issues</h3>
         <ul class="issues-list" id="criticalIssues">
-            <li>No critical issues reported <span class="delete-item">×</span></li>
+            <li id="defaultCriticalIssue" onclick="editListItem(this)">No critical issues reported</li>
         </ul>
         <div class="list-controls">
-            <button onclick="addListItem('criticalIssues')" class="list-add-button">Add Issue</button>
+            <button onclick="addNewItem('criticalIssues')" class="list-add-button">Add New Issue</button>
         </div>
     </div>
 
+    <!-- Action Items Box -->
     <div class="metric-box">
         <h3>Action Items</h3>
         <ul class="issues-list" id="actionItems">
-            <li>No action items reported <span class="delete-item">×</span></li>
+            <li id="defaultActionItem" onclick="editListItem(this)">No action items reported</li>
         </ul>
         <div class="list-controls">
-            <button onclick="addListItem('actionItems')" class="list-add-button">Add Action Item</button>
+            <button onclick="addNewItem('actionItems')" class="list-add-button">Add New Item</button>
         </div>
     </div>
 
+    <!-- KPI Trends Box -->
     <div class="metric-box">
         <h3>KPI Trends</h3>
         <div class="metric-item">
@@ -356,9 +343,8 @@ Complete Warehouse Operations Dashboard
 
         let editMode = false;
         let currentEditId = null;
-        let currentListItem = null;
 
-        // Set current date
+        // Set current date and update initial data
         document.getElementById('currentDate').textContent = new Date().toLocaleDateString();
         updateReport(reportData);
 
@@ -418,41 +404,48 @@ Complete Warehouse Operations Dashboard
             });
         }
 
-        function showEditModal(id, itemElement) {
+        function editListItem(item) {
+            if (!editMode) return;
+            
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = item.textContent;
+            input.style.width = '90%';
+            input.style.padding = '5px';
+            input.style.margin = '5px 0';
+            
+            item.textContent = '';
+            item.appendChild(input);
+            input.focus();
+            
+            input.onblur = function() {
+                item.textContent = this.value;
+            };
+            
+            input.onkeypress = function(e) {
+                if (e.key === 'Enter') {
+                    item.textContent = this.value;
+                }
+            };
+        }
+
+        function addNewItem(listId) {
+            const list = document.getElementById(listId);
+            const newItem = document.createElement('li');
+            newItem.textContent = 'New item';
+            newItem.onclick = function() { editListItem(this); };
+            list.appendChild(newItem);
+            editListItem(newItem);
+        }
+
+        function showEditModal(id) {
             if (!editMode) return;
             
             currentEditId = id;
-            currentListItem = itemElement;
-            
-            const currentValue = itemElement ? 
-                itemElement.childNodes[0].textContent.trim() : 
-                document.getElementById(id).textContent;
-                
+            const currentValue = document.getElementById(id).textContent;
             document.getElementById('editInput').value = currentValue;
             document.getElementById('editModal').style.display = 'block';
         }
 
         function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
-            currentEditId = null;
-            currentListItem = null;
-        }
-
-        function saveEdit() {
-            if (!currentEditId) return;
-            
-            const newValue = document.getElementById('editInput').value;
-            
-            if (currentListItem) {
-                currentListItem.childNodes[0].textContent = newValue + ' ';
-            } else {
-                document.getElementById(currentEditId).textContent = newValue;
-                reportData[currentEditId] = newValue;
-            }
-            
-            closeEditModal();
-        }
-
-        function addListItem(listId) {
-            const list = document.getElementById(listId);
-            const newItem = document.createElement('li');
+            document.getElementById('editModal
