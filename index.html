@@ -1,3 +1,5 @@
+Complete Warehouse Operations Dashboard
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -70,7 +72,6 @@
             color: red;
         }
 
-        /* New styles for controls and modals */
         .controls {
             margin-bottom: 20px;
             display: flex;
@@ -102,6 +103,52 @@
             background-color: #e0e0e0;
         }
 
+        .edit-mode .issues-list li {
+            cursor: pointer;
+            background-color: #f0f0f0;
+            padding: 5px;
+            margin: 5px 0;
+            border-radius: 3px;
+        }
+
+        .edit-mode .issues-list li:hover {
+            background-color: #e0e0e0;
+        }
+
+        .list-controls {
+            margin-top: 10px;
+            display: none;
+        }
+
+        .edit-mode .list-controls {
+            display: block;
+        }
+
+        .list-add-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .list-add-button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .delete-item {
+            color: red;
+            margin-left: 10px;
+            cursor: pointer;
+            display: none;
+        }
+
+        .edit-mode .delete-item {
+            display: inline;
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -131,7 +178,7 @@
         }
 
         @media print {
-            .controls, .modal {
+            .controls, .modal, .list-controls, .delete-item {
                 display: none !important;
             }
         }
@@ -254,15 +301,21 @@
     <div class="metric-box">
         <h3>Critical Issues</h3>
         <ul class="issues-list" id="criticalIssues">
-            <li>No critical issues reported</li>
+            <li>No critical issues reported <span class="delete-item">×</span></li>
         </ul>
+        <div class="list-controls">
+            <button onclick="addListItem('criticalIssues')" class="list-add-button">Add Issue</button>
+        </div>
     </div>
 
     <div class="metric-box">
         <h3>Action Items</h3>
         <ul class="issues-list" id="actionItems">
-            <li>No action items reported</li>
+            <li>No action items reported <span class="delete-item">×</span></li>
         </ul>
+        <div class="list-controls">
+            <button onclick="addListItem('actionItems')" class="list-add-button">Add Action Item</button>
+        </div>
     </div>
 
     <div class="metric-box">
@@ -282,7 +335,7 @@
     </div>
 
     <script>
-        // Initialize data object to store all values
+        // Initialize data
         let reportData = {
             reportOwner: "John Doe",
             outboundOrders: "150",
@@ -301,14 +354,13 @@
             inventoryAccuracy: "99.1%"
         };
 
-        // Set current date
-        document.getElementById('currentDate').textContent = new Date().toLocaleDateString();
-        
-        // Update report with initial data
-        updateReport(reportData);
-
         let editMode = false;
         let currentEditId = null;
+        let currentListItem = null;
+
+        // Set current date
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString();
+        updateReport(reportData);
 
         function toggleEditMode() {
             editMode = !editMode;
@@ -327,11 +379,9 @@
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            // Temporarily hide controls
             document.querySelector('.controls').style.display = 'none';
             
             html2pdf().set(options).from(element).save().then(() => {
-                // Show controls again
                 document.querySelector('.controls').style.display = 'flex';
             });
         }
@@ -348,7 +398,6 @@
             const email = document.getElementById('emailInput').value;
             const subject = document.getElementById('subjectInput').value;
             
-            // Generate PDF blob
             const element = document.body;
             const options = {
                 margin: 10,
@@ -359,23 +408,26 @@
             };
 
             html2pdf().set(options).from(element).output('blob').then(function(pdf) {
-                // Create form data
                 const formData = new FormData();
                 formData.append('pdf', pdf, 'report.pdf');
                 formData.append('email', email);
                 formData.append('subject', subject);
 
-                // Here you would typically send this to your server
                 alert('In a production environment, this would send the PDF to: ' + email);
                 closeEmailModal();
             });
         }
 
-        function showEditModal(id) {
+        function showEditModal(id, itemElement) {
             if (!editMode) return;
             
             currentEditId = id;
-            const currentValue = document.getElementById(id).textContent;
+            currentListItem = itemElement;
+            
+            const currentValue = itemElement ? 
+                itemElement.childNodes[0].textContent.trim() : 
+                document.getElementById(id).textContent;
+                
             document.getElementById('editInput').value = currentValue;
             document.getElementById('editModal').style.display = 'block';
         }
@@ -383,35 +435,24 @@
         function closeEditModal() {
             document.getElementById('editModal').style.display = 'none';
             currentEditId = null;
+            currentListItem = null;
         }
 
         function saveEdit() {
             if (!currentEditId) return;
             
             const newValue = document.getElementById('editInput').value;
-            document.getElementById(currentEditId).textContent = newValue;
-            reportData[currentEditId] = newValue;
+            
+            if (currentListItem) {
+                currentListItem.childNodes[0].textContent = newValue + ' ';
+            } else {
+                document.getElementById(currentEditId).textContent = newValue;
+                reportData[currentEditId] = newValue;
+            }
             
             closeEditModal();
         }
 
-        // Add click listeners to all metric values
-        document.querySelectorAll('.metric-item span:last-child').forEach(span => {
-            span.addEventListener('click', () => {
-                if (span.id) {
-                    showEditModal(span.id);
-                }
-            });
-        });
-
-        function updateReport(data) {
-            Object.keys(data).forEach(key => {
-                const element = document.getElementById(key);
-                if (element) {
-                    element.textContent = data[key];
-                }
-            });
-        }
-    </script>
-</body>
-</html>
+        function addListItem(listId) {
+            const list = document.getElementById(listId);
+            const newItem = document.createElement('li');
