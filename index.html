@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Warehouse Operations Summary</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <title>Daily Operations Summary</title>
+    <!-- Ensure the script is available -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha384-JyfsJHLzP9NR8A72aODrKnVj5JgQHRF7NhReZkOMwrF2dUxxmv5gs+3k3QLvH5rD" crossorigin="anonymous"></script>
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -40,30 +41,12 @@
             background-color: var(--secondary-color);
         }
 
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
         .metric-box {
             border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 15px;
+            margin-bottom: 20px;
             background-color: #f8f9fa;
-        }
-
-        .metric-box h3 {
-            margin-top: 0;
-            color: var(--secondary-color);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 5px;
-        }
-
-        .metric-item {
-            display: flex;
-            justify-content: space-between;
-            margin: 8px 0;
         }
 
         .editable-list {
@@ -71,7 +54,6 @@
             border: 1px solid var(--border-color);
             border-radius: 4px;
             padding: 10px;
-            margin-top: 10px;
         }
 
         .add-item-form {
@@ -105,115 +87,79 @@
             cursor: pointer;
         }
 
-        .editable {
-            background-color: #fff;
-            border: 1px solid var(--border-color);
-            padding: 4px;
-            border-radius: 4px;
-            width: 80%;
-        }
-
-        @media (max-width: 600px) {
-            .metrics-grid {
-                grid-template-columns: 1fr;
+        @media print {
+            .no-print {
+                display: none;
             }
         }
     </style>
 </head>
 <body>
-    <div class="button-container">
+    <div class="button-container no-print">
         <button onclick="window.print()" class="print-button">Print Report</button>
         <button onclick="exportToPDF()" class="export-button">Export to PDF</button>
     </div>
 
-    <div class="header">
-        <h1>Warehouse Operations Daily Summary</h1>
-        <p>Date: <span id="currentDate">Loading...</span></p>
-        <p>Report Owner: <span id="reportOwner" class="editable" contenteditable="true">Loading...</span></p>
+    <div class="metric-box">
+        <h3>Critical Issues</h3>
+        <ul id="criticalIssues" class="editable-list"></ul>
+        <div class="add-item-form no-print">
+            <input type="text" id="newCriticalIssue" placeholder="Enter new critical issue">
+            <button onclick="addItem('criticalIssues', 'newCriticalIssue')">Add Issue</button>
+        </div>
     </div>
 
-    <div class="metrics-grid">
-        <div class="metric-box">
-            <h3>Shipping Performance</h3>
-            <div class="metric-item"><span>Total Outbound Orders:</span><span id="outboundOrders" class="editable" contenteditable="true">0</span></div>
-            <div class="metric-item"><span>On-Time Shipments:</span><span id="onTimeShipments" class="editable" contenteditable="true">0%</span></div>
-        </div>
-        <div class="metric-box">
-            <h3>Receiving Performance</h3>
-            <div class="metric-item"><span>Total Inbound Orders:</span><span id="inboundOrders" class="editable" contenteditable="true">0</span></div>
-            <div class="metric-item"><span>Receipts Processed:</span><span id="receiptsProcessed" class="editable" contenteditable="true">0%</span></div>
-        </div>
-        <div class="metric-box">
-            <h3>Critical Issues</h3>
-            <ul id="criticalIssues" class="editable-list"></ul>
-            <div class="add-item-form">
-                <input type="text" id="newCriticalIssue" placeholder="Enter new critical issue">
-                <button onclick="addItem('criticalIssues', 'newCriticalIssue')">Add Issue</button>
-            </div>
+    <div class="metric-box">
+        <h3>Action Items</h3>
+        <ul id="actionItems" class="editable-list"></ul>
+        <div class="add-item-form no-print">
+            <input type="text" id="newActionItem" placeholder="Enter new action item">
+            <button onclick="addItem('actionItems', 'newActionItem')">Add Item</button>
         </div>
     </div>
 
     <script>
-        // Set current date
-        document.getElementById('currentDate').textContent = new Date().toLocaleDateString();
-
-        // Example data - replace with your actual data source
-        const sampleData = {
-            reportOwner: "John Doe",
-            outboundOrders: "150",
-            onTimeShipments: "95%",
-            inboundOrders: "120",
-            receiptsProcessed: "88%"
-        };
-
-        // Function to update report data
-        function updateReport(data) {
-            Object.keys(data).forEach(key => {
-                const element = document.getElementById(key);
-                if (element) {
-                    element.textContent = data[key];
-                }
-            });
-        }
-
-        // Function to add items
+        // Function to add new items to lists
         function addItem(listId, inputId) {
             const input = document.getElementById(inputId);
             const list = document.getElementById(listId);
-
+            
             if (input.value.trim() !== '') {
                 const li = document.createElement('li');
                 li.textContent = input.value;
-
+                
+                // Add delete button
                 const deleteBtn = document.createElement('span');
                 deleteBtn.textContent = ' ×';
                 deleteBtn.className = 'delete-item';
                 deleteBtn.onclick = function() {
                     li.remove();
                 };
-
+                
                 li.appendChild(deleteBtn);
                 list.appendChild(li);
                 input.value = '';
             }
         }
 
-        // Export to PDF
+        // Function to export to PDF
         function exportToPDF() {
+            const noPrintElements = document.querySelectorAll('.no-print');
+            noPrintElements.forEach(el => el.style.display = 'none');
+
             const element = document.body;
             const opt = {
                 margin: 1,
-                filename: 'warehouse_report.pdf',
+                filename: 'daily_operations_report.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2 },
                 jsPDF: { unit: 'cm', format: 'a4', orientation: 'portrait' }
             };
 
-            html2pdf().set(opt).from(element).save();
+            html2pdf().set(opt).from(element).save().then(() => {
+                noPrintElements.forEach(el => el.style.display = 'block');
+            });
         }
-
-        // Initialize report data
-        updateReport(sampleData);
     </script>
 </body>
 </html>
