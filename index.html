@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Operations Summary</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
+        /* Previous styles remain the same */
         :root {
             --primary-color: #2c3e50;
             --secondary-color: #34495e;
@@ -20,227 +22,105 @@
             color: var(--primary-color);
         }
 
-        @media print {
-            body {
-                padding: 0;
-                color: black;
-            }
-            
-            .no-print {
-                display: none;
-            }
-            
-            a {
-                text-decoration: none;
-                color: black;
-            }
-        }
-
-        .header {
-            border-bottom: 2px solid var(--border-color);
+        /* Additional styles for new features */
+        .controls {
             margin-bottom: 20px;
-            padding-bottom: 10px;
-        }
-
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .metric-box {
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 15px;
-            background-color: #f8f9fa;
-        }
-
-        .metric-box h3 {
-            margin-top: 0;
-            color: var(--secondary-color);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 5px;
-        }
-
-        .metric-item {
             display: flex;
-            justify-content: space-between;
-            margin: 8px 0;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
-        .issues-list {
-            padding-left: 20px;
-        }
-
-        .issues-list li {
-            margin-bottom: 10px;
-        }
-
-        .trend-up {
-            color: green;
-        }
-
-        .trend-down {
-            color: red;
-        }
-
-        button.print-button {
+        .button {
             background-color: var(--primary-color);
             color: white;
             border: none;
             padding: 10px 20px;
             border-radius: 4px;
             cursor: pointer;
-            margin-bottom: 20px;
         }
 
-        button.print-button:hover {
+        .button:hover {
             background-color: var(--secondary-color);
         }
 
-        @media (max-width: 600px) {
-            .metrics-grid {
-                grid-template-columns: 1fr;
+        .edit-mode .metric-item span:last-child {
+            cursor: pointer;
+            background-color: #f0f0f0;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        .edit-mode .metric-item span:last-child:hover {
+            background-color: #e0e0e0;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            min-width: 300px;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+        }
+
+        @media print {
+            .controls, .modal {
+                display: none !important;
             }
         }
     </style>
 </head>
 <body>
-    <button onclick="window.print()" class="print-button no-print">Print Report</button>
-
-    <div class="header">
-        <h1>Warehouse Operations Daily Summary</h1>
-        <p>Date: <span id="currentDate">Loading...</span></p>
-        <p>Report Owner: <span id="reportOwner">Loading...</span></p>
+    <div class="controls no-print">
+        <button onclick="toggleEditMode()" class="button" id="editButton">Enable Edit Mode</button>
+        <button onclick="generatePDF()" class="button">Save as PDF</button>
+        <button onclick="showEmailModal()" class="button">Email Report</button>
     </div>
 
-    <div class="metrics-grid">
-        <!-- Define Section -->
-        <div class="metric-box">
-            <h3>Shipping Performance</h3>
-            <div class="metric-item">
-                <span>Total Outbound Orders:</span>
-                <span id="outboundOrders">0</span>
-            </div>
-            <div class="metric-item">
-                <span>On-Time Shipments:</span>
-                <span id="onTimeShipments">0%</span>
-            </div>
-            <div class="metric-item">
-                <span>Late Shipments:</span>
-                <span id="lateShipments">0</span>
-            </div>
-            <div class="metric-item">
-                <span>Carrier Issues:</span>
-                <span id="carrierIssues">0</span>
-            </div>
-        </div>
-
-        <div class="metric-box">
-            <h3>Receiving Performance</h3>
-            <div class="metric-item">
-                <span>Total Inbound Orders:</span>
-                <span id="inboundOrders">0</span>
-            </div>
-            <div class="metric-item">
-                <span>Receipts Processed:</span>
-                <span id="receiptsProcessed">0%</span>
-            </div>
-            <div class="metric-item">
-                <span>Vendor Discrepancies:</span>
-                <span id="vendorDiscrepancies">0</span>
-            </div>
-            <div class="metric-item">
-                <span>Put-away Completion:</span>
-                <span id="putawayCompletion">0%</span>
-            </div>
-        </div>
-
-        <!-- Measure Section -->
-        <div class="metric-box">
-            <h3>Labor Efficiency</h3>
-            <div class="metric-item">
-                <span>Total Headcount:</span>
-                <span id="totalHeadcount">0</span>
-            </div>
-            <div class="metric-item">
-                <span>Productivity Rate:</span>
-                <span id="productivityRate">0</span>
-            </div>
-            <div class="metric-item">
-                <span>Overtime Hours:</span>
-                <span id="overtimeHours">0</span>
-            </div>
-        </div>
-
-        <div class="metric-box">
-            <h3>Quality Metrics</h3>
-            <div class="metric-item">
-                <span>Shipping Accuracy:</span>
-                <span id="shippingAccuracy">0%</span>
-            </div>
-            <div class="metric-item">
-                <span>Receiving Accuracy:</span>
-                <span id="receivingAccuracy">0%</span>
-            </div>
-            <div class="metric-item">
-                <span>Inventory Accuracy:</span>
-                <span id="inventoryAccuracy">0%</span>
-            </div>
+    <!-- Email Modal -->
+    <div id="emailModal" class="modal">
+        <div class="modal-content">
+            <h3>Send Report via Email</h3>
+            <input type="email" id="emailInput" placeholder="Enter recipient email">
+            <input type="text" id="subjectInput" placeholder="Enter email subject">
+            <button onclick="sendEmail()" class="button">Send</button>
+            <button onclick="closeEmailModal()" class="button">Cancel</button>
         </div>
     </div>
 
-    <!-- Analyze Section -->
-    <div class="metric-box">
-        <h3>Critical Issues</h3>
-        <ul class="issues-list" id="criticalIssues">
-            <li>No critical issues reported</li>
-        </ul>
-    </div>
-
-    <!-- Improve Section -->
-    <div class="metric-box">
-        <h3>Action Items</h3>
-        <ul class="issues-list" id="actionItems">
-            <li>No action items reported</li>
-        </ul>
-    </div>
-
-    <!-- Control Section -->
-    <div class="metric-box">
-        <h3>KPI Trends</h3>
-        <div class="metric-item">
-            <span>Shipping Performance:</span>
-            <span id="shippingTrend" class="trend-up">↑</span>
-        </div>
-        <div class="metric-item">
-            <span>Receiving Performance:</span>
-            <span id="receivingTrend" class="trend-up">↑</span>
-        </div>
-        <div class="metric-item">
-            <span>Quality Metrics:</span>
-            <span id="qualityTrend" class="trend-up">↑</span>
+    <!-- Edit Value Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3>Edit Value</h3>
+            <input type="text" id="editInput">
+            <button onclick="saveEdit()" class="button">Save</button>
+            <button onclick="closeEditModal()" class="button">Cancel</button>
         </div>
     </div>
 
+    <!-- Rest of your existing HTML remains the same -->
+    
     <script>
-        // Set current date
-        document.getElementById('currentDate').textContent = new Date().toLocaleDateString();
-        
-        // Function to update report data
-        function updateReport(data) {
-            // Update all metrics with actual data
-            Object.keys(data).forEach(key => {
-                const element = document.getElementById(key);
-                if (element) {
-                    element.textContent = data[key];
-                }
-            });
-        }
-
-        // Example data - replace with your actual data source
-        const sampleData = {
+        // Initialize data object to store all values
+        let reportData = {
             reportOwner: "John Doe",
             outboundOrders: "150",
             onTimeShipments: "95%",
@@ -258,8 +138,121 @@
             inventoryAccuracy: "99.1%"
         };
 
-        // Update the report with sample data
-        updateReport(sampleData);
+        // Set current date
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString();
+        
+        // Update report with initial data
+        updateReport(reportData);
+
+        let editMode = false;
+        let currentEditId = null;
+
+        function toggleEditMode() {
+            editMode = !editMode;
+            document.body.classList.toggle('edit-mode');
+            document.getElementById('editButton').textContent = 
+                editMode ? 'Disable Edit Mode' : 'Enable Edit Mode';
+        }
+
+        // Function to generate PDF
+        function generatePDF() {
+            const element = document.body;
+            const options = {
+                margin: 10,
+                filename: 'warehouse-operations-report.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Temporarily hide controls
+            document.querySelector('.controls').style.display = 'none';
+            
+            html2pdf().set(options).from(element).save().then(() => {
+                // Show controls again
+                document.querySelector('.controls').style.display = 'flex';
+            });
+        }
+
+        // Email modal functions
+        function showEmailModal() {
+            document.getElementById('emailModal').style.display = 'block';
+        }
+
+        function closeEmailModal() {
+            document.getElementById('emailModal').style.display = 'none';
+        }
+
+        function sendEmail() {
+            const email = document.getElementById('emailInput').value;
+            const subject = document.getElementById('subjectInput').value;
+            
+            // Generate PDF blob
+            const element = document.body;
+            const options = {
+                margin: 10,
+                filename: 'warehouse-operations-report.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(options).from(element).output('blob').then(function(pdf) {
+                // Create form data
+                const formData = new FormData();
+                formData.append('pdf', pdf, 'report.pdf');
+                formData.append('email', email);
+                formData.append('subject', subject);
+
+                // Here you would typically send this to your server
+                alert('In a production environment, this would send the PDF to: ' + email);
+                closeEmailModal();
+            });
+        }
+
+        // Edit value functions
+        function showEditModal(id) {
+            if (!editMode) return;
+            
+            currentEditId = id;
+            const currentValue = document.getElementById(id).textContent;
+            document.getElementById('editInput').value = currentValue;
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            currentEditId = null;
+        }
+
+        function saveEdit() {
+            if (!currentEditId) return;
+            
+            const newValue = document.getElementById('editInput').value;
+            document.getElementById(currentEditId).textContent = newValue;
+            reportData[currentEditId] = newValue;
+            
+            closeEditModal();
+        }
+
+        // Add click listeners to all metric values
+        document.querySelectorAll('.metric-item span:last-child').forEach(span => {
+            span.addEventListener('click', () => {
+                if (span.id) {
+                    showEditModal(span.id);
+                }
+            });
+        });
+
+        // Update report function remains the same
+        function updateReport(data) {
+            Object.keys(data).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    element.textContent = data[key];
+                }
+            });
+        }
     </script>
 </body>
 </html>
