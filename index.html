@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Operations Summary</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -19,6 +18,22 @@
             margin: 0 auto;
             padding: 20px;
             color: var(--primary-color);
+        }
+
+        @media print {
+            body {
+                padding: 0;
+                color: black;
+            }
+            
+            .no-print {
+                display: none;
+            }
+            
+            a {
+                text-decoration: none;
+                color: black;
+            }
         }
 
         .header {
@@ -60,11 +75,6 @@
 
         .issues-list li {
             margin-bottom: 10px;
-            cursor: pointer;
-        }
-
-        .edit-mode .issues-list li:hover {
-            background-color: #f0f0f0;
         }
 
         .trend-up {
@@ -75,92 +85,18 @@
             color: red;
         }
 
-        .controls {
-            margin-bottom: 20px;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .button {
+        button.print-button {
             background-color: var(--primary-color);
             color: white;
             border: none;
             padding: 10px 20px;
             border-radius: 4px;
             cursor: pointer;
+            margin-bottom: 20px;
         }
 
-        .button:hover {
+        button.print-button:hover {
             background-color: var(--secondary-color);
-        }
-
-        .edit-mode .metric-item span:last-child {
-            cursor: pointer;
-            background-color: #f0f0f0;
-            padding: 2px 5px;
-            border-radius: 3px;
-        }
-
-        .edit-mode .metric-item span:last-child:hover {
-            background-color: #e0e0e0;
-        }
-
-        .list-controls {
-            margin-top: 10px;
-            display: none;
-        }
-
-        .edit-mode .list-controls {
-            display: block;
-        }
-
-        .list-add-button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-
-        .list-add-button:hover {
-            background-color: var(--secondary-color);
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-        }
-
-        .modal-content {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            min-width: 300px;
-        }
-
-        .modal input {
-            width: 100%;
-            padding: 8px;
-            margin: 10px 0;
-        }
-
-        @media print {
-            .controls, .modal, .list-controls {
-                display: none !important;
-            }
         }
 
         @media (max-width: 600px) {
@@ -171,32 +107,7 @@
     </style>
 </head>
 <body>
-    <div class="controls no-print">
-        <button onclick="toggleEditMode()" class="button" id="editButton">Enable Edit Mode</button>
-        <button onclick="generatePDF()" class="button">Save as PDF</button>
-        <button onclick="showEmailModal()" class="button">Email Report</button>
-    </div>
-
-    <!-- Email Modal -->
-    <div id="emailModal" class="modal">
-        <div class="modal-content">
-            <h3>Send Report via Email</h3>
-            <input type="email" id="emailInput" placeholder="Enter recipient email">
-            <input type="text" id="subjectInput" placeholder="Enter email subject">
-            <button onclick="sendEmail()" class="button">Send</button>
-            <button onclick="closeEmailModal()" class="button">Cancel</button>
-        </div>
-    </div>
-
-    <!-- Edit Value Modal -->
-    <div id="editModal" class="modal">
-        <div class="modal-content">
-            <h3>Edit Value</h3>
-            <input type="text" id="editInput">
-            <button onclick="saveEdit()" class="button">Save</button>
-            <button onclick="closeEditModal()" class="button">Cancel</button>
-        </div>
-    </div>
+    <button onclick="window.print()" class="print-button no-print">Print Report</button>
 
     <div class="header">
         <h1>Warehouse Operations Daily Summary</h1>
@@ -205,7 +116,7 @@
     </div>
 
     <div class="metrics-grid">
-        <!-- Shipping Performance Box -->
+        <!-- Define Section -->
         <div class="metric-box">
             <h3>Shipping Performance</h3>
             <div class="metric-item">
@@ -226,7 +137,6 @@
             </div>
         </div>
 
-        <!-- Receiving Performance Box -->
         <div class="metric-box">
             <h3>Receiving Performance</h3>
             <div class="metric-item">
@@ -247,7 +157,7 @@
             </div>
         </div>
 
-        <!-- Labor Efficiency Box -->
+        <!-- Measure Section -->
         <div class="metric-box">
             <h3>Labor Efficiency</h3>
             <div class="metric-item">
@@ -264,7 +174,6 @@
             </div>
         </div>
 
-        <!-- Quality Metrics Box -->
         <div class="metric-box">
             <h3>Quality Metrics</h3>
             <div class="metric-item">
@@ -282,29 +191,23 @@
         </div>
     </div>
 
-    <!-- Critical Issues Box -->
+    <!-- Analyze Section -->
     <div class="metric-box">
         <h3>Critical Issues</h3>
         <ul class="issues-list" id="criticalIssues">
-            <li id="defaultCriticalIssue" onclick="editListItem(this)">No critical issues reported</li>
+            <li>No critical issues reported</li>
         </ul>
-        <div class="list-controls">
-            <button onclick="addNewItem('criticalIssues')" class="list-add-button">Add New Issue</button>
-        </div>
     </div>
 
-    <!-- Action Items Box -->
+    <!-- Improve Section -->
     <div class="metric-box">
         <h3>Action Items</h3>
         <ul class="issues-list" id="actionItems">
-            <li id="defaultActionItem" onclick="editListItem(this)">No action items reported</li>
+            <li>No action items reported</li>
         </ul>
-        <div class="list-controls">
-            <button onclick="addNewItem('actionItems')" class="list-add-button">Add New Item</button>
-        </div>
     </div>
 
-    <!-- KPI Trends Box -->
+    <!-- Control Section -->
     <div class="metric-box">
         <h3>KPI Trends</h3>
         <div class="metric-item">
@@ -322,8 +225,22 @@
     </div>
 
     <script>
-        // Initialize data
-        let reportData = {
+        // Set current date
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString();
+        
+        // Function to update report data
+        function updateReport(data) {
+            // Update all metrics with actual data
+            Object.keys(data).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    element.textContent = data[key];
+                }
+            });
+        }
+
+        // Example data - replace with your actual data source
+        const sampleData = {
             reportOwner: "John Doe",
             outboundOrders: "150",
             onTimeShipments: "95%",
@@ -341,111 +258,8 @@
             inventoryAccuracy: "99.1%"
         };
 
-        let editMode = false;
-        let currentEditId = null;
-
-        // Set current date and update initial data
-        document.getElementById('currentDate').textContent = new Date().toLocaleDateString();
-        updateReport(reportData);
-
-        function toggleEditMode() {
-            editMode = !editMode;
-            document.body.classList.toggle('edit-mode');
-            document.getElementById('editButton').textContent = 
-                editMode ? 'Disable Edit Mode' : 'Enable Edit Mode';
-        }
-
-        function generatePDF() {
-            const element = document.body;
-            const options = {
-                margin: 10,
-                filename: 'warehouse-operations-report.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-
-            document.querySelector('.controls').style.display = 'none';
-            
-            html2pdf().set(options).from(element).save().then(() => {
-                document.querySelector('.controls').style.display = 'flex';
-            });
-        }
-
-        function showEmailModal() {
-            document.getElementById('emailModal').style.display = 'block';
-        }
-
-        function closeEmailModal() {
-            document.getElementById('emailModal').style.display = 'none';
-        }
-
-        function sendEmail() {
-            const email = document.getElementById('emailInput').value;
-            const subject = document.getElementById('subjectInput').value;
-            
-            const element = document.body;
-            const options = {
-                margin: 10,
-                filename: 'warehouse-operations-report.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-
-            html2pdf().set(options).from(element).output('blob').then(function(pdf) {
-                const formData = new FormData();
-                formData.append('pdf', pdf, 'report.pdf');
-                formData.append('email', email);
-                formData.append('subject', subject);
-
-                alert('In a production environment, this would send the PDF to: ' + email);
-                closeEmailModal();
-            });
-        }
-
-        function editListItem(item) {
-            if (!editMode) return;
-            
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = item.textContent;
-            input.style.width = '90%';
-            input.style.padding = '5px';
-            input.style.margin = '5px 0';
-            
-            item.textContent = '';
-            item.appendChild(input);
-            input.focus();
-            
-            input.onblur = function() {
-                item.textContent = this.value;
-            };
-            
-            input.onkeypress = function(e) {
-                if (e.key === 'Enter') {
-                    item.textContent = this.value;
-                }
-            };
-        }
-
-        function addNewItem(listId) {
-            const list = document.getElementById(listId);
-            const newItem = document.createElement('li');
-            newItem.textContent = 'New item';
-            newItem.onclick = function() { editListItem(this); };
-            list.appendChild(newItem);
-            editListItem(newItem);
-        }
-
-        function showEditModal(id) {
-            if (!editMode) return;
-            
-            currentEditId = id;
-            const currentValue = document.getElementById(id).textContent;
-            document.getElementById('editInput').value = currentValue;
-            document.getElementById('editModal').style.display = 'block';
-        }
-
-        function closeEditModal() {
-            document.getElementById('editModal
+        // Update the report with sample data
+        updateReport(sampleData);
+    </script>
+</body>
+</html>
