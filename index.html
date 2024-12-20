@@ -105,6 +105,14 @@
             cursor: pointer;
         }
 
+        .editable {
+            background-color: #fff;
+            border: 1px solid var(--border-color);
+            padding: 4px;
+            border-radius: 4px;
+            width: 80%;
+        }
+
         @media (max-width: 600px) {
             .metrics-grid {
                 grid-template-columns: 1fr;
@@ -121,19 +129,19 @@
     <div class="header">
         <h1>Warehouse Operations Daily Summary</h1>
         <p>Date: <span id="currentDate">Loading...</span></p>
-        <p>Report Owner: <span id="reportOwner">Loading...</span></p>
+        <p>Report Owner: <span id="reportOwner" class="editable" contenteditable="true">Loading...</span></p>
     </div>
 
     <div class="metrics-grid">
         <div class="metric-box">
             <h3>Shipping Performance</h3>
-            <div class="metric-item"><span>Total Outbound Orders:</span><span id="outboundOrders">0</span></div>
-            <div class="metric-item"><span>On-Time Shipments:</span><span id="onTimeShipments">0%</span></div>
+            <div class="metric-item"><span>Total Outbound Orders:</span><span id="outboundOrders" class="editable" contenteditable="true">0</span></div>
+            <div class="metric-item"><span>On-Time Shipments:</span><span id="onTimeShipments" class="editable" contenteditable="true">0%</span></div>
         </div>
         <div class="metric-box">
             <h3>Receiving Performance</h3>
-            <div class="metric-item"><span>Total Inbound Orders:</span><span id="inboundOrders">0</span></div>
-            <div class="metric-item"><span>Receipts Processed:</span><span id="receiptsProcessed">0%</span></div>
+            <div class="metric-item"><span>Total Inbound Orders:</span><span id="inboundOrders" class="editable" contenteditable="true">0</span></div>
+            <div class="metric-item"><span>Receipts Processed:</span><span id="receiptsProcessed" class="editable" contenteditable="true">0%</span></div>
         </div>
         <div class="metric-box">
             <h3>Critical Issues</h3>
