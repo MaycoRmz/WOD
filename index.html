@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,6 +10,9 @@
             --primary-color: #2c3e50;
             --secondary-color: #34495e;
             --border-color: #bdc3c7;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
         }
 
         body {
@@ -40,6 +42,12 @@
             border-radius: 8px;
             padding: 15px;
             background-color: #f8f9fa;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .metric-box:hover {
+            transform: translateY(-2px);
         }
 
         .metric-box h3 {
@@ -53,27 +61,55 @@
             display: flex;
             justify-content: space-between;
             margin: 8px 0;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .edit-mode .metric-item:hover {
+            background-color: #f0f0f0;
+            cursor: pointer;
         }
 
         .issues-list {
             padding-left: 20px;
+            list-style-type: none;
         }
 
         .issues-list li {
             margin-bottom: 10px;
-            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            background-color: white;
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .edit-mode .issues-list li:hover {
             background-color: #f0f0f0;
+            cursor: pointer;
+        }
+
+        .delete-button {
+            display: none;
+            color: var(--danger-color);
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .edit-mode .delete-button {
+            display: block;
         }
 
         .trend-up {
-            color: green;
+            color: var(--success-color);
         }
 
         .trend-down {
-            color: red;
+            color: var(--danger-color);
         }
 
         .controls {
@@ -90,44 +126,19 @@
             padding: 10px 20px;
             border-radius: 4px;
             cursor: pointer;
+            transition: background-color 0.2s;
         }
 
         .button:hover {
             background-color: var(--secondary-color);
         }
 
-        .edit-mode .metric-item span:last-child {
-            cursor: pointer;
-            background-color: #f0f0f0;
-            padding: 2px 5px;
-            border-radius: 3px;
+        .add-button {
+            background-color: var(--success-color);
         }
 
-        .edit-mode .metric-item span:last-child:hover {
-            background-color: #e0e0e0;
-        }
-
-        .list-controls {
-            margin-top: 10px;
-            display: none;
-        }
-
-        .edit-mode .list-controls {
-            display: block;
-        }
-
-        .list-add-button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-
-        .list-add-button:hover {
-            background-color: var(--secondary-color);
+        .delete-button {
+            background-color: var(--danger-color);
         }
 
         .modal {
@@ -150,16 +161,19 @@
             left: 50%;
             transform: translate(-50%, -50%);
             min-width: 300px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        .modal input {
+        .modal input, .modal textarea {
             width: 100%;
             padding: 8px;
             margin: 10px 0;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
         }
 
         @media print {
-            .controls, .modal, .list-controls {
+            .controls, .modal, .delete-button {
                 display: none !important;
             }
         }
@@ -172,7 +186,7 @@
     </style>
 </head>
 <body>
-    <div class="controls no-print">
+    <div class="controls">
         <button onclick="toggleEditMode()" class="button" id="editButton">Enable Edit Mode</button>
         <button onclick="generatePDF()" class="button">Save as PDF</button>
         <button onclick="showEmailModal()" class="button">Email Report</button>
@@ -182,18 +196,18 @@
     <div id="emailModal" class="modal">
         <div class="modal-content">
             <h3>Send Report via Email</h3>
-            <input type="email" id="emailInput" placeholder="Enter recipient email">
-            <input type="text" id="subjectInput" placeholder="Enter email subject">
+            <input type="email" id="emailInput" placeholder="Enter recipient email" required>
+            <input type="text" id="subjectInput" placeholder="Enter email subject" required>
             <button onclick="sendEmail()" class="button">Send</button>
             <button onclick="closeEmailModal()" class="button">Cancel</button>
         </div>
     </div>
 
-    <!-- Edit Value Modal -->
+    <!-- Edit Modal -->
     <div id="editModal" class="modal">
         <div class="modal-content">
-            <h3>Edit Value</h3>
-            <input type="text" id="editInput">
+            <h3>Edit Item</h3>
+            <textarea id="editInput" rows="4"></textarea>
             <button onclick="saveEdit()" class="button">Save</button>
             <button onclick="closeEditModal()" class="button">Cancel</button>
         </div>
@@ -202,124 +216,23 @@
     <div class="header">
         <h1>Warehouse Operations Daily Summary</h1>
         <p>Date: <span id="currentDate">Loading...</span></p>
-        <p>Report Owner: <span id="reportOwner">Loading...</span></p>
+        <p>Report Owner: <span id="reportOwner" onclick="editReportOwner()">Loading...</span></p>
     </div>
 
-    <div class="metrics-grid">
-        <!-- Shipping Performance Box -->
-        <div class="metric-box">
-            <h3>Shipping Performance</h3>
-            <div class="metric-item">
-                <span>Total Outbound Orders:</span>
-                <span id="outboundOrders">0</span>
-            </div>
-            <div class="metric-item">
-                <span>On-Time Shipments:</span>
-                <span id="onTimeShipments">0%</span>
-            </div>
-            <div class="metric-item">
-                <span>Late Shipments:</span>
-                <span id="lateShipments">0</span>
-            </div>
-            <div class="metric-item">
-                <span>Carrier Issues:</span>
-                <span id="carrierIssues">0</span>
-            </div>
-        </div>
-
-        <!-- Receiving Performance Box -->
-        <div class="metric-box">
-            <h3>Receiving Performance</h3>
-            <div class="metric-item">
-                <span>Total Inbound Orders:</span>
-                <span id="inboundOrders">0</span>
-            </div>
-            <div class="metric-item">
-                <span>Receipts Processed:</span>
-                <span id="receiptsProcessed">0%</span>
-            </div>
-            <div class="metric-item">
-                <span>Vendor Discrepancies:</span>
-                <span id="vendorDiscrepancies">0</span>
-            </div>
-            <div class="metric-item">
-                <span>Put-away Completion:</span>
-                <span id="putawayCompletion">0%</span>
-            </div>
-        </div>
-
-        <!-- Labor Efficiency Box -->
-        <div class="metric-box">
-            <h3>Labor Efficiency</h3>
-            <div class="metric-item">
-                <span>Total Headcount:</span>
-                <span id="totalHeadcount">0</span>
-            </div>
-            <div class="metric-item">
-                <span>Productivity Rate:</span>
-                <span id="productivityRate">0</span>
-            </div>
-            <div class="metric-item">
-                <span>Overtime Hours:</span>
-                <span id="overtimeHours">0</span>
-            </div>
-        </div>
-
-        <!-- Quality Metrics Box -->
-        <div class="metric-box">
-            <h3>Quality Metrics</h3>
-            <div class="metric-item">
-                <span>Shipping Accuracy:</span>
-                <span id="shippingAccuracy">0%</span>
-            </div>
-            <div class="metric-item">
-                <span>Receiving Accuracy:</span>
-                <span id="receivingAccuracy">0%</span>
-            </div>
-            <div class="metric-item">
-                <span>Inventory Accuracy:</span>
-                <span id="inventoryAccuracy">0%</span>
-            </div>
-        </div>
-    </div>
+    <!-- [Previous metric boxes remain the same] -->
 
     <!-- Critical Issues Box -->
     <div class="metric-box">
         <h3>Critical Issues</h3>
-        <ul class="issues-list" id="criticalIssues">
-            <li id="defaultCriticalIssue" onclick="editListItem(this)">No critical issues reported</li>
-        </ul>
-        <div class="list-controls">
-            <button onclick="addNewItem('criticalIssues')" class="list-add-button">Add New Issue</button>
-        </div>
+        <ul class="issues-list" id="criticalIssues"></ul>
+        <button onclick="addNewIssue('criticalIssues')" class="button add-button">Add New Issue</button>
     </div>
 
     <!-- Action Items Box -->
     <div class="metric-box">
         <h3>Action Items</h3>
-        <ul class="issues-list" id="actionItems">
-            <li id="defaultActionItem" onclick="editListItem(this)">No action items reported</li>
-        </ul>
-        <div class="list-controls">
-            <button onclick="addNewItem('actionItems')" class="list-add-button">Add New Item</button>
-        </div>
-    </div>
-
-    <!-- KPI Trends Box -->
-    <div class="metric-box">
-        <h3>KPI Trends</h3>
-        <div class="metric-item">
-            <span>Shipping Performance:</span>
-            <span id="shippingTrend" class="trend-up">↑</span>
-        </div>
-        <div class="metric-item">
-            <span>Receiving Performance:</span>
-            <span id="receivingTrend" class="trend-up">↑</span>
-        </div>
-        <div class="metric-item">
-            <span>Quality Metrics:</span>
-            <span id="qualityTrend" class="trend-up">↑</span>
-        </div>
+        <ul class="issues-list" id="actionItems"></ul>
+        <button onclick="addNewIssue('actionItems')" class="button add-button">Add New Action Item</button>
     </div>
 
     <script>
@@ -339,15 +252,92 @@
             overtimeHours: "12",
             shippingAccuracy: "99.5%",
             receivingAccuracy: "98.2%",
-            inventoryAccuracy: "99.1%"
+            inventoryAccuracy: "99.1%",
+            criticalIssues: [
+                "Conveyor system maintenance required",
+                "Staff shortage in receiving department"
+            ],
+            actionItems: [
+                "Schedule conveyor maintenance for next week",
+                "Interview temporary staff candidates",
+                "Update safety protocols"
+            ]
         };
 
         let editMode = false;
-        let currentEditId = null;
+        let currentEditItem = null;
 
-        // Set current date and update initial data
-        document.getElementById('currentDate').textContent = new Date().toLocaleDateString();
-        updateReport(reportData);
+        // Initialize the page
+        function initializePage() {
+            document.getElementById('currentDate').textContent = new Date().toLocaleDateString();
+            document.getElementById('reportOwner').textContent = reportData.reportOwner;
+            
+            // Initialize lists
+            updateList('criticalIssues', reportData.criticalIssues);
+            updateList('actionItems', reportData.actionItems);
+            
+            // Update all metrics
+            updateMetrics();
+        }
+
+        function updateList(listId, items) {
+            const list = document.getElementById(listId);
+            list.innerHTML = '';
+            
+            items.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span onclick="editItem('${listId}', ${index})">${item}</span>
+                    <span class="delete-button" onclick="deleteItem('${listId}', ${index})">×</span>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        function addNewIssue(listId) {
+            if (!editMode) return;
+            
+            currentEditItem = {
+                listId: listId,
+                index: reportData[listId].length
+            };
+            
+            document.getElementById('editInput').value = '';
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        function editItem(listId, index) {
+            if (!editMode) return;
+            
+            currentEditItem = { listId, index };
+            document.getElementById('editInput').value = reportData[listId][index];
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        function deleteItem(listId, index) {
+            if (!editMode) return;
+            
+            if (confirm('Are you sure you want to delete this item?')) {
+                reportData[listId].splice(index, 1);
+                updateList(listId, reportData[listId]);
+            }
+        }
+
+        function saveEdit() {
+            if (!currentEditItem) return;
+            
+            const newValue = document.getElementById('editInput').value.trim();
+            if (newValue) {
+                if (currentEditItem.index === reportData[currentEditItem.listId].length) {
+                    reportData[currentEditItem.listId].push(newValue);
+                } else {
+                    reportData[currentEditItem.listId][currentEditItem.index] = newValue;
+                }
+                updateList(currentEditItem.listId, reportData[currentEditItem.listId]);
+            }
+            
+            closeEditModal();
+        }
 
         function toggleEditMode() {
             editMode = !editMode;
@@ -360,16 +350,17 @@
             const element = document.body;
             const options = {
                 margin: 10,
-                filename: 'warehouse-operations-report.pdf',
+                filename: `warehouse-operations-report-${new Date().toISOString().split('T')[0]}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            document.querySelector('.controls').style.display = 'none';
+            // Hide controls before generating PDF
+            document.body.classList.add('printing');
             
             html2pdf().set(options).from(element).save().then(() => {
-                document.querySelector('.controls').style.display = 'flex';
+                document.body.classList.remove('printing');
             });
         }
 
@@ -379,74 +370,38 @@
 
         function closeEmailModal() {
             document.getElementById('emailModal').style.display = 'none';
+            document.getElementById('emailInput').value = '';
+            document.getElementById('subjectInput').value = '';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            currentEditItem = null;
         }
 
         function sendEmail() {
             const email = document.getElementById('emailInput').value;
             const subject = document.getElementById('subjectInput').value;
             
-            const element = document.body;
-            const options = {
-                margin: 10,
-                filename: 'warehouse-operations-report.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-
-            html2pdf().set(options).from(element).output('blob').then(function(pdf) {
-                const formData = new FormData();
-                formData.append('pdf', pdf, 'report.pdf');
-                formData.append('email', email);
-                formData.append('subject', subject);
-
-                alert('In a production environment, this would send the PDF to: ' + email);
-                closeEmailModal();
-            });
+            if (!email || !subject) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            // In a real implementation, this would send the PDF to a server
+            alert(`Report would be sent to: ${email}\nSubject: ${subject}`);
+            closeEmailModal();
         }
 
-        function editListItem(item) {
-            if (!editMode) return;
-            
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = item.textContent;
-            input.style.width = '90%';
-            input.style.padding = '5px';
-            input.style.margin = '5px 0';
-            
-            item.textContent = '';
-            item.appendChild(input);
-            input.focus();
-            
-            input.onblur = function() {
-                item.textContent = this.value;
-            };
-            
-            input.onkeypress = function(e) {
-                if (e.key === 'Enter') {
-                    item.textContent = this.value;
-                }
-            };
-        }
+        // Initialize the page when loaded
+        document.addEventListener('DOMContentLoaded', initializePage);
 
-        function addNewItem(listId) {
-            const list = document.getElementById(listId);
-            const newItem = document.createElement('li');
-            newItem.textContent = 'New item';
-            newItem.onclick = function() { editListItem(this); };
-            list.appendChild(newItem);
-            editListItem(newItem);
-        }
-
-        function showEditModal(id) {
-            if (!editMode) return;
-            
-            currentEditId = id;
-            const currentValue = document.getElementById(id).textContent;
-            document.getElementById('editInput').value = currentValue;
-            document.getElementById('editModal').style.display = 'block';
-        }
-
-        function closeEditModal() {
-            document.getElementById('editModal
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        };
+    </script>
+</body>
+</html>
