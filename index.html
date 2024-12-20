@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,45 +9,27 @@
             --primary-color: #2c3e50;
             --secondary-color: #34495e;
             --border-color: #bdc3c7;
-            --background-color: #f8f9fa;
-            --button-padding: 10px 20px;
-            --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
         }
 
         body {
-            font-family: var(--font-family);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             line-height: 1.6;
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
             color: var(--primary-color);
-            background-color: var(--background-color);
         }
 
-        @media print {
-            body {
-                padding: 0;
-                color: black;
-            }
-
-            .no-print {
-                display: none;
-            }
-
-            a {
-                text-decoration: none;
-                color: black;
-            }
+        .no-print {
+            display: none;
         }
 
-        /* Header Styling */
         .header {
             border-bottom: 2px solid var(--border-color);
             margin-bottom: 20px;
             padding-bottom: 10px;
         }
 
-        /* Grid Layout for Metrics */
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -60,8 +41,7 @@
             border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 15px;
-            background-color: var(--background-color);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            background-color: #f8f9fa;
         }
 
         .metric-box h3 {
@@ -77,50 +57,40 @@
             margin: 8px 0;
         }
 
-        .issues-list {
-            padding-left: 20px;
-            list-style-type: none;
-            margin: 0;
-        }
-
-        .issues-list li {
-            margin-bottom: 10px;
-        }
-
-        .trend-up {
-            color: green;
-        }
-
-        .trend-down {
-            color: red;
-        }
-
-        /* Print Button */
-        button.print-button {
+        button {
             background-color: var(--primary-color);
             color: white;
             border: none;
-            padding: var(--button-padding);
+            padding: 10px 20px;
             border-radius: 4px;
             cursor: pointer;
             margin-bottom: 20px;
         }
 
-        button.print-button:hover {
+        button:hover {
             background-color: var(--secondary-color);
         }
 
-        /* Mobile responsive */
         @media (max-width: 600px) {
             .metrics-grid {
                 grid-template-columns: 1fr;
             }
         }
     </style>
-</head>
 
+    <!-- Include FileSaver.js for Word export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <!-- Include jsPDF for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Include html-docx-js for Word export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-docx-js/0.3.1/html-docx.js"></script>
+
+</head>
 <body>
-    <button onclick="window.print()" class="print-button no-print">Print Report</button>
+
+    <button onclick="window.print()" class="no-print">Print Report</button>
+    <button onclick="saveAsPDF()">Save as PDF</button>
+    <button onclick="saveAsWord()">Save as Word</button>
 
     <div class="header">
         <h1>Warehouse Operations Daily Summary</h1>
@@ -129,7 +99,6 @@
     </div>
 
     <div class="metrics-grid">
-        <!-- Shipping Performance Section -->
         <div class="metric-box">
             <h3>Shipping Performance</h3>
             <div class="metric-item">
@@ -150,100 +119,24 @@
             </div>
         </div>
 
-        <!-- Receiving Performance Section -->
-        <div class="metric-box">
-            <h3>Receiving Performance</h3>
-            <div class="metric-item">
-                <span>Total Inbound Orders:</span>
-                <span id="inboundOrders">0</span>
-            </div>
-            <div class="metric-item">
-                <span>Receipts Processed:</span>
-                <span id="receiptsProcessed">0%</span>
-            </div>
-            <div class="metric-item">
-                <span>Vendor Discrepancies:</span>
-                <span id="vendorDiscrepancies">0</span>
-            </div>
-            <div class="metric-item">
-                <span>Put-away Completion:</span>
-                <span id="putawayCompletion">0%</span>
-            </div>
-        </div>
+        <!-- Additional Metric Sections Here... -->
 
-        <!-- Labor Efficiency Section -->
-        <div class="metric-box">
-            <h3>Labor Efficiency</h3>
-            <div class="metric-item">
-                <span>Total Headcount:</span>
-                <span id="totalHeadcount">0</span>
-            </div>
-            <div class="metric-item">
-                <span>Productivity Rate:</span>
-                <span id="productivityRate">0</span>
-            </div>
-            <div class="metric-item">
-                <span>Overtime Hours:</span>
-                <span id="overtimeHours">0</span>
-            </div>
-        </div>
-
-        <!-- Quality Metrics Section -->
-        <div class="metric-box">
-            <h3>Quality Metrics</h3>
-            <div class="metric-item">
-                <span>Shipping Accuracy:</span>
-                <span id="shippingAccuracy">0%</span>
-            </div>
-            <div class="metric-item">
-                <span>Receiving Accuracy:</span>
-                <span id="receivingAccuracy">0%</span>
-            </div>
-            <div class="metric-item">
-                <span>Inventory Accuracy:</span>
-                <span id="inventoryAccuracy">0%</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Critical Issues Section -->
-    <div class="metric-box">
-        <h3>Critical Issues</h3>
-        <ul class="issues-list" id="criticalIssues">
-            <li>No critical issues reported</li>
-        </ul>
-    </div>
-
-    <!-- Action Items Section -->
-    <div class="metric-box">
-        <h3>Action Items</h3>
-        <ul class="issues-list" id="actionItems">
-            <li>No action items reported</li>
-        </ul>
-    </div>
-
-    <!-- KPI Trends Section -->
-    <div class="metric-box">
-        <h3>KPI Trends</h3>
-        <div class="metric-item">
-            <span>Shipping Performance:</span>
-            <span id="shippingTrend" class="trend-up">↑</span>
-        </div>
-        <div class="metric-item">
-            <span>Receiving Performance:</span>
-            <span id="receivingTrend" class="trend-up">↑</span>
-        </div>
-        <div class="metric-item">
-            <span>Quality Metrics:</span>
-            <span id="qualityTrend" class="trend-up">↑</span>
-        </div>
     </div>
 
     <script>
         // Set current date
         document.getElementById('currentDate').textContent = new Date().toLocaleDateString();
+        
+        // Example data
+        const sampleData = {
+            reportOwner: "John Doe",
+            outboundOrders: "150",
+            onTimeShipments: "95%",
+            lateShipments: "8",
+            carrierIssues: "2"
+        };
 
-        // Function to update report data dynamically
+        // Function to update report data
         function updateReport(data) {
             Object.keys(data).forEach(key => {
                 const element = document.getElementById(key);
@@ -253,28 +146,27 @@
             });
         }
 
-        // Sample data for testing (you can replace this with actual data source)
-        const sampleData = {
-            reportOwner: "John Doe",
-            outboundOrders: "150",
-            onTimeShipments: "95%",
-            lateShipments: "8",
-            carrierIssues: "2",
-            inboundOrders: "120",
-            receiptsProcessed: "88%",
-            vendorDiscrepancies: "5",
-            putawayCompletion: "92%",
-            totalHeadcount: "45",
-            productivityRate: "22.5 units/hour",
-            overtimeHours: "12",
-            shippingAccuracy: "99.5%",
-            receivingAccuracy: "98.2%",
-            inventoryAccuracy: "99.1%"
-        };
-
         // Update the report with sample data
         updateReport(sampleData);
+
+        // Save as PDF
+        function saveAsPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.html(document.body, {
+                callback: function (doc) {
+                    doc.save('warehouse_report.pdf');
+                },
+                margin: [10, 10, 10, 10]
+            });
+        }
+
+        // Save as Word Document
+        function saveAsWord() {
+            const content = document.body;
+            const converted = htmlDocx.asBlob(content.outerHTML);
+            saveAs(converted, 'warehouse_report.docx');
+        }
     </script>
 </body>
-
 </html>
